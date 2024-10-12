@@ -9,7 +9,7 @@ export default defineNitroPlugin((_nitroApp: NitroApp) => {
 
     bot.on("message", async (ctx) => {
         const keyboard = new InlineKeyboard()
-            .url("Play 🪙", "https://t.me/s0nicash_bot/start").row()
+            .url("Play 🪙", "https://t.me/sonicashgame_bot/start").row()
             .url("Join to the channel", "https://t.me/Sonicashh").row();
 
         await bot.api.sendMessage(ctx.chatId, HELLO_MESSAGE, {

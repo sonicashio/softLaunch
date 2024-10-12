@@ -39,7 +39,7 @@ export class Settings {
     public energyLimitPerBooster: number;
 
     constructor() {
-        this.telegramWebAppUrl = "https://t.me/s0nicash_bot/start";
+        this.telegramWebAppUrl = "https://t.me/sonicashgame_bot/start";
         this.telegramChannelId = "-1002217295250";
         this.userStartingBalance = 5_000;
         this.maxDailyEnergyReplenishment = 6;
