@@ -48,7 +48,7 @@ async function handleUserAuth(user: LoginWidgetUser): Promise<void> {
       </p>
 
       <LoginWidget
-        bot-username="s0nicash_bot"
+        bot-username="sonicashgame_bot"
         :user-photo="true"
         @auth="handleUserAuth"
       />
