@@ -40,7 +40,7 @@ export default defineNuxtConfig({
             xFrameOptions: false,
         },
         rateLimiter: {
-            tokensPerInterval: 150,
+            tokensPerInterval: 300,
             interval: 300_000,
         },
     },
