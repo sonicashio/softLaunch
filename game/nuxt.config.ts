@@ -40,8 +40,8 @@ export default defineNuxtConfig({
             xFrameOptions: false,
         },
         rateLimiter: {
-            tokensPerInterval: 300,
-            interval: 300_000,
+            tokensPerInterval: 100,
+            interval: 60_000,
         },
     },
     tailwindcss: {
