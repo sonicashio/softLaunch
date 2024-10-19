@@ -43,8 +43,10 @@ export default defineEventHandler(async (event) => {
         { level: nextLevelNumber },
         { cache: [`user_level_${nextLevelNumber}`, 600_000] },
     );
+    const userCanSpinFortuneWheelForFree: boolean = userService.canSpinFortuneWheelForFree(user);
+
     return {
-        user: await UserDto.fromUser(em, user, nextLevel, false),
+        user: await UserDto.fromUser(em, user, nextLevel, false, userCanSpinFortuneWheelForFree),
         profitSinceLastSync: typeof syncData === "string" ? 0 : syncData.profit,
     };
 });

@@ -17,6 +17,14 @@ await callOnce(() => {
 
         navigateTo("/app");
     }, { manual: true });
+
+    // Update app data
+    setInterval(async () => {
+        const { fetch: fetchAppData } = useAppData();
+        const { fetch: fetchUser } = useUser();
+
+        await Promise.all([fetchAppData(), fetchUser()]);
+    }, useRuntimeConfig().public.appDataFetchInterval);
 });
 
 // User
@@ -196,6 +204,7 @@ onMounted(() => {
       </div>
     </AppPopup>
 
+    <!-- Main Menu -->
     <AppMainMenu class="mt-1" />
 
     <!-- Profit & Income -->

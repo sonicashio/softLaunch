@@ -5,6 +5,7 @@ definePageMeta({
     layout: "app-default",
 });
 
+const config = useRuntimeConfig().public;
 let isSupportedPlatform: Ref<boolean>;
 let initData: string;
 if (import.meta.dev) {
@@ -33,8 +34,9 @@ if (isSupportedPlatform.value && initData) {
 
             const { fetch: fetchUser } = useUser();
             const { fetch: fetchSettings } = useSettings();
+            const { fetch: fetchAppData } = useAppData();
 
-            await Promise.all([fetchUser(), fetchSettings()]);
+            await Promise.all([fetchUser(), fetchSettings(), fetchAppData()]);
             await navigateTo("/app");
         },
         onResponseError: (ctx) => {
@@ -55,21 +57,21 @@ if (isSupportedPlatform.value && initData) {
     </h1>
 
     <a
-      href="https://t.me/sonicashgame_bot"
+      :href="`https://t.me/${config.telegramBotName}`"
       rel="noopener noreferrer"
     >
       <img
         class="object-contain w-56 h-56"
         src="~/assets/img/qr.png"
-        alt="@sonicashgame_bot"
+        :alt="`@${config.telegramBotName}`"
       />
     </a>
     <a
-      href="https://t.me/sonicashgame_bot"
+      :href="`https://t.me/${config.telegramBotName}`"
       rel="noopener noreferrer"
       class="text-2xl font-bold uppercase text-shadow mt-2"
     >
-      @sonicashgame_bot
+      @{{ config.telegramBotName }}
     </a>
   </section>
 

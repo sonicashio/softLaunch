@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { toast } from "vue3-toastify";
 import { BoosterType } from "~/types";
+import type { UserBoostersDto } from "~/types/dto/user";
 
 definePageMeta({
     layout: "app-logged-in",
@@ -14,11 +15,12 @@ const isFreeDailyPopupOpen = ref<boolean>(false);
 const isPaidDailyPopupOpen = ref<boolean>(false);
 const selectedPaidDaily = ref<BoosterType | null>(null);
 const nextEnergyReplenishmentCountDown = ref<string | undefined>(undefined);
-const { data: status, error } = await useFetch("/api/user/booster/status");
 
-if (error.value) {
-    toast.error("Failed to fetch boosters: " + getErrorMsg(error.value));
-}
+const { appData } = useAppData();
+const userBoosters: { data: Ref<UserBoostersDto>; fetch: () => Promise<boolean> } = appData.userBoosters;
+const status: Ref<UserBoostersDto> = userBoosters.data;
+
+console.log(status.value);
 
 const nextClickPowerLevel = computed<{ level: number; price: number } | undefined>(() => {
     if (status.value === null) {
@@ -51,6 +53,17 @@ const nextEnergyLimitLevelPrice = computed<string | undefined>(() => {
 
     return numberFriendlyName(nextEnergyLimitLevel.value.price) ?? undefined;
 });
+
+function getNextEnergyReplenishment(): string | undefined {
+    if (user.value === null || user.value.dailyEnergyReplenishmentClaimedDayTime === undefined) {
+        return undefined;
+    }
+
+    return getFormattedDateDiff(
+        user.value!.dailyEnergyReplenishmentClaimedDayTime + (1000 * 60 * 60),
+        Date.now(),
+    );
+}
 
 const { pause: pauseEnergyReplenishmentCounter, resume: resumeEnergyReplenishmentCounter } = useIntervalFn(() => {
     nextEnergyReplenishmentCountDown.value = getNextEnergyReplenishment();
@@ -88,7 +101,7 @@ async function useEnergyReplenishment(): Promise<void> {
         });
 
         await userSync(0);
-        status.value = await $fetch("/api/user/booster/status");
+        await userBoosters.fetch();
         isFreeDailyPopupOpen.value = false;
         resumeEnergyReplenishmentCounter();
         toast.success("Energy replenishment used", { autoClose: 1000 });
@@ -134,7 +147,7 @@ async function upgradeBoost(boostType: BoosterType): Promise<void> {
         });
 
         await userSync(0);
-        status.value = await $fetch("/api/user/booster/status");
+        await userBoosters.fetch();
         isPaidDailyPopupOpen.value = false;
         toast.success("Upgrade success", { autoClose: 1000 });
     } catch (error) {
@@ -142,17 +155,6 @@ async function upgradeBoost(boostType: BoosterType): Promise<void> {
     }
 
     isLoading.value = false;
-}
-
-function getNextEnergyReplenishment(): string | undefined {
-    if (user.value === null || user.value.dailyEnergyReplenishmentClaimedDayTime === undefined) {
-        return undefined;
-    }
-
-    return getFormattedDateDiff(
-        user.value!.dailyEnergyReplenishmentClaimedDayTime + (1000 * 60 * 60),
-        Date.now(),
-    );
 }
 </script>
 

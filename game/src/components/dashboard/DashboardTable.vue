@@ -4,13 +4,13 @@ defineProps<{
     selectable?: boolean;
 }>();
 
-const checked = ref<boolean>(false);
-
 const emit = defineEmits<{
     allSelected: [checked: boolean];
 }>();
 
+const checked = ref<boolean>(false);
 function selectAll(): void {
+    checked.value = !checked.value;
     emit("allSelected", checked.value);
 }
 </script>
@@ -23,10 +23,10 @@ function selectAll(): void {
         <tr>
           <th v-if="selectable">
             <input
-              v-model="checked"
               aria-label="Check all"
               type="checkbox"
               class="checkbox checkbox-xs"
+              :checked="checked"
               @change="selectAll"
             />
           </th>
@@ -47,11 +47,11 @@ function selectAll(): void {
         <tr>
           <th v-if="selectable">
             <input
-              v-model="checked"
               aria-label="Check all"
               type="checkbox"
               class="checkbox checkbox-xs"
-              @click="selectAll"
+              :checked="checked"
+              @change="selectAll"
             />
           </th>
           <th

@@ -9,7 +9,7 @@ export default defineNitroPlugin((_nitroApp: NitroApp) => {
 
     bot.on("message", async (ctx) => {
         const keyboard = new InlineKeyboard()
-            .url("Play 🪙", "https://t.me/sonicashgame_bot/start").row()
+            .url("Play 🪙", `https://t.me/${process.env["NUXT_PUBLIC_TELEGRAM_BOT_NAME"]}/${process.env["NUXT_PUBLIC_TELEGRAM_BOT_WEB_APP_NAME"]}`).row()
             .url("Join to the channel", "https://t.me/Sonicashh").row();
 
         await bot.api.sendMessage(ctx.chatId, HELLO_MESSAGE, {

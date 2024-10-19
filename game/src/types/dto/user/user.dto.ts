@@ -31,12 +31,14 @@ export class UserDto {
     public lastLoginRewardDay!: number;
     public canClaimLoginReward!: boolean;
     public canClaimDailyReward!: boolean;
+    public fortuneWheelSpinsLeft!: number;
 
     public static async fromUser(
         em: EntityManager,
         user: User,
         nextUserLevel: UserLevel | null,
         includeLocation: boolean,
+        canSpinFortuneWheelForFree: boolean,
     ): Promise<UserDto> {
         await em.populate(user, ["level", "selectedCharacter.character"]);
 
@@ -84,6 +86,7 @@ export class UserDto {
         dto.lastLoginRewardDay = user.lastLoginRewardDay;
         dto.canClaimLoginReward = user.lastDailyLoginClaimedDayTime !== todayTime;
         dto.canClaimDailyReward = user.lastDailyRewardClaimTime !== todayTime;
+        dto.fortuneWheelSpinsLeft = user.fortuneWheelAdditionalSpinsLeft + (canSpinFortuneWheelForFree ? 1 : 0);
         return dto;
     }
 }

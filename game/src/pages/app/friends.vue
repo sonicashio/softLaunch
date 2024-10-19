@@ -1,46 +1,59 @@
 <script lang="ts" setup>
-import { toast } from "vue3-toastify";
+import type { ReferralDto } from "~/types/dto";
 
 definePageMeta({
     layout: "app-logged-in",
 });
 
-const telegramWebAppUrl: string = useSettings().settings.value!.telegramWebAppUrl;
-const { user } = useUser();
-
-const { data: referralData, error } = await useFetch("/api/user/referrals", {
-    transform: (referralData) => {
-        const referrals = referralData.referrals.map((referral) => {
-            return {
-                username: referral.username ?? referral.firstName + (referral.lastName ? " " + referral.lastName : ""),
-                profitPerHour: referral.profitPerHour,
-                photoUrl: referral.photoUrl,
-                firstCharsName: firstCharsNameOfUserData(referral),
-            };
-        });
-        return {
-            referrals,
-            referralReward: referralData.referralReward,
-        };
-    },
-});
-if (error.value) {
-    toast.error("Failed to fetch referrals: " + getErrorMsg(error.value));
+interface ReferralData {
+    referralReward: number;
+    referrals: {
+        username: string;
+        profitPerHour: number;
+        photoUrl: string | undefined;
+        firstCharsName: string;
+    }[];
 }
+
+function transform(referralData: { referralReward: number; referrals: ReferralDto[] }): ReferralData {
+    const referrals = referralData.referrals.map((referral) => {
+        return {
+            username: referral.username ?? referral.firstName + (referral.lastName ? " " + referral.lastName : ""),
+            profitPerHour: referral.profitPerHour,
+            photoUrl: referral.photoUrl,
+            firstCharsName: firstCharsNameOfUserData(referral),
+        };
+    });
+
+    return {
+        referralReward: referralData.referralReward,
+        referrals,
+    };
+}
+
+const { appData } = useAppData();
+const referralData = ref<ReferralData>(transform(appData.userReferrals.data.value));
+
+watch(appData.userReferrals.data, () => {
+    referralData.value = transform(appData.userReferrals.data.value);
+});
+
+const config = useRuntimeConfig().public;
+const { user } = useUser();
 
 // Telegram
 const { useWebAppNavigation } = await import("vue-tg");
 const { openTelegramLink } = useWebAppNavigation();
 
 function handleInviteFriend(): void {
-    const inviteLink: string = `${telegramWebAppUrl}?startapp=${user.value!.telegramId}`;
+    const inviteLink: string = `https://t.me/${config.telegramBotName}/${config.telegramBotWebAppName}?startapp=${user.value!.telegramId}`;
     const shareText: string = `Join sonicash app`;
     const fullUrl: string = `https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent(shareText)}`;
     openTelegramLink(fullUrl);
 }
 
 function handleCopyLink(): void {
-    const inviteLink: string = `${telegramWebAppUrl}?startapp=${user.value!.telegramId}`;
+    const inviteLink: string = `https://t.me/${config.telegramBotName}/${config.telegramBotWebAppName}?startapp=${user.value!.telegramId}`;
     navigator.clipboard.writeText(inviteLink);
 }
 </script>
@@ -108,7 +121,7 @@ function handleCopyLink(): void {
             src="~/assets/img/icons/coin.png"
           />
 
-          <span class="text-lg font-bold text-white">{{ user.totalReferralRewards.toLocaleString("en-US") }}</span>
+          <span class="text-lg font-bold text-white">{{ user.totalReferralRewards.toLocaleString("en-US") }} P/H</span>
         </div>
       </div>
     </div>

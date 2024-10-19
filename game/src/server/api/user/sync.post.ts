@@ -68,7 +68,9 @@ export default defineEventHandler(async (event) => {
         { level: nextLevelNumber },
         { cache: [`user_level_${nextLevelNumber}`, 600_000] },
     );
-    const userDto: UserDto = await UserDto.fromUser(em, user, nextLevel, false);
+
+    const userCanSpinFortuneWheelForFree: boolean = userService.canSpinFortuneWheelForFree(user);
+    const userDto: UserDto = await UserDto.fromUser(em, user, nextLevel, false, userCanSpinFortuneWheelForFree);
 
     return {
         clicksStatus: typeof syncData.balanceFromClicks === "number" ? "valid" : syncData.balanceFromClicks,

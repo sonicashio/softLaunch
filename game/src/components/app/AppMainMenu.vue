@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { toast } from "vue3-toastify";
+import type { DailyLoginRewardDto } from "~/types/dto";
 
 const isLoading = ref<boolean>(false);
 
@@ -7,12 +8,10 @@ const isLoading = ref<boolean>(false);
 const { user, sync } = useUser();
 
 // Daily login
-const isDailyLoginPopupOpen = ref<boolean>(false);
-const { data: daily, error } = await useFetch("/api/dailies");
+const { appData } = useAppData();
+const dailies: Ref<{ dailies: DailyLoginRewardDto[];dailyReward: number }> = appData.dailies.data;
 
-if (error.value) {
-    toast.error("Failed to fetch dailies: " + getErrorMsg(error));
-}
+const isDailyLoginPopupOpen = ref<boolean>(false);
 
 async function claimDailyLogin(): Promise<void> {
     if (user.value === null) {
@@ -78,7 +77,7 @@ async function claimDailyReward(): Promise<void> {
 
         <div class="grid grid-cols-4 gap-1 mt-4 w-full place-items-stretch m-1 select-none">
           <button
-            v-for="dailyLogin in daily?.dailies"
+            v-for="dailyLogin in dailies?.dailies"
             :key="dailyLogin.day"
             class="flex flex-col items-center justify-center rounded-2xl border-b-2 border-black/50"
             :class="[
@@ -144,7 +143,7 @@ async function claimDailyReward(): Promise<void> {
           />
 
           <span class="text-3xl font-extrabold text-yellow-300 mb-1">
-            {{ daily?.dailyReward.toLocaleString("en-US") }}
+            {{ dailies?.dailyReward.toLocaleString("en-US") }}
           </span>
 
           <button
@@ -207,22 +206,22 @@ async function claimDailyReward(): Promise<void> {
       </button>
 
       <NuxtLink
-        to="/app/lucky-wheel"
+        to="/app/fortune-wheel"
         class="relative col-span-4 p-1 select-none bg-gradient-to-r from-[#243db4] via-[#3f75e0] to-[#1621c6] rounded-lg"
       >
         <div class="flex flex-col items-center justify-center text-white font-bold">
           <img
             class="object-contain h-10 pointer-events-none"
-            src="~/assets/img/icons/lucky-wheel.png"
+            src="~/assets/img/icons/fortune-wheel.png"
           />
           <p class="mt-0.5 text-center text-white text-sm font-bold">
-            Lucky wheel
+            Fortune Wheel
           </p>
         </div>
 
-        <div class="flex items-center justify-center absolute top-0 left-0 right-0 bottom-0 bg-black opacity-70">
+        <!-- <div class="flex items-center justify-center absolute top-0 left-0 right-0 bottom-0 bg-black opacity-70">
           <span class="text-2xl font-extrabold text-yellow-300">Soon</span>
-        </div>
+        </div> -->
       </NuxtLink>
     </div>
   </div>

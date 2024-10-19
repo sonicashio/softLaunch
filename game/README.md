@@ -4,8 +4,15 @@ Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introdu
 
 ## Migrations
 
-```
+```shell
 bunx -b mikro-orm migration:create --initial
+```
+
+## Change date and time for linux
+
+```shell
+sudo timedatectl set-ntp false
+sudo date -s 'next day'
 ```
 
 ## Setup

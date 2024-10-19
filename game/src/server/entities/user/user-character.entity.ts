@@ -8,9 +8,6 @@ export class UserCharacter {
     @PrimaryKey({ autoincrement: true })
     public readonly id!: number;
 
-    @Property({ version: true })
-    public readonly version!: number; // Optimistic Locking
-
     @ManyToOne(() => User)
     @Index()
     public readonly owner: Rel<User>;

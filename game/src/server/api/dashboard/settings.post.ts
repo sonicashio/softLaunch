@@ -7,10 +7,6 @@ import { UserRole } from "~/types";
 
 const bodySchema = z.object({
     // Main settings
-    telegramWebAppUrl: z.string()
-        .min(8, { message: "Telegram web app URL must be at least 8 characters" })
-        .max(255, { message: "Telegram web app URL must be at most 255 characters" }),
-
     telegramChannelId: z.string()
         .min(4, { message: "Telegram Channel ID must be at least 4 characters" })
         .max(64, { message: "Telegram Channel ID must be at most 64 characters" }),
@@ -43,6 +39,12 @@ const bodySchema = z.object({
 
     energyLimitPerBooster: z.number()
         .min(0, { message: "Energy Limit Per Booster must be a positive number" }),
+
+    maxReferralsForFortuneWheelPerDay: z.number()
+        .min(0, { message: "Max Referrals For Fortune Wheel Per Day must be a positive number" }),
+
+    fortuneWheelSpinsPerReferral: z.number()
+        .min(0, { message: "Fortune Wheel Spins Per Referral must be a positive number" }),
 });
 
 export default defineEventHandler(async (event) => {

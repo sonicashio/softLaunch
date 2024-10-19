@@ -30,6 +30,11 @@ async function fetchStats(): Promise<void> {
 //     return `${hours}h ${minutes % 60}m`;
 // }
 
+const mostActiveUser = computed(() => {
+    return usersStatics.value!.mostActiveUser?.username
+        ?? usersStatics.value!.mostActiveUser?.firstName + (usersStatics.value!.mostActiveUser?.lastName ? " " + usersStatics.value!.mostActiveUser?.lastName : "");
+});
+
 const userGrowthChartData = computed(() => ({
     options: {
         title: { text: "User Growth" },
@@ -203,7 +208,7 @@ const avgCoinsChartData = computed(() => ({
         />
         <DashboardCard
           title="Most Active User"
-          :value="usersStatics.mostActiveUser?.username || 'N/A'"
+          :value="mostActiveUser"
           :subvalue="`${usersStatics.mostActiveUser?.totalClicks || 0} clicks`"
           icon="🏆"
         />

@@ -113,7 +113,10 @@ async function deleteDailyLogin(): Promise<void> {
           </div>
         </div>
 
-        <DashboardTable :columns="['Day', 'Reward', 'SpcialDay', 'Actions']">
+        <DashboardTable
+          :columns="['Day', 'Reward', 'SpcialDay', 'Actions']"
+          class="mb-4"
+        >
           <tr
             v-for="day in dailiesInfo.dailies"
             :key="day.day"

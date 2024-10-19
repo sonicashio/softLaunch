@@ -38,6 +38,11 @@ const menuItems: MenuItem[] = [
         localeName: "dailyLogins",
     },
     {
+        route: "/dashboard/fortune-wheel",
+        icon: "fluent-emoji-high-contrast:wheel",
+        localeName: "fortuneWheel",
+    },
+    {
         route: "/dashboard/settings",
         icon: "ic:twotone-settings",
         localeName: "settings",

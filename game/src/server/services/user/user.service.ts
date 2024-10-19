@@ -10,8 +10,10 @@ import { User, UserCharacter, UserLevel, UserBooster } from "~/server/entities/u
 import { ClickPowerLevelBooster, EnergyLimitLevelBooster } from "~/server/entities/boosters";
 import { DailyLoginReward } from "~/server/entities/rewards";
 import { EarnTask, EarnTaskCompletion } from "~/server/entities/tasks";
-import { BoosterType, EarnTaskType, UserRole } from "~/types";
+import type { FortuneWheelEnergyReplenishmentItemReward, FortuneWheelBalaceItemReward } from "~/types";
+import { BoosterType, EarnTaskType, FortuneWheelItemType, UserRole } from "~/types";
 import type { Settings } from "~/server/entities/settings";
+import { FortuneWheelItem } from "~/server/entities/fortune-wheel";
 
 const MAX_CLICKS_PER_SECOND: number = 10;
 const MAX_CLICK_ACCUMULATION_SECONDS: number = 10; // Client side sync should be less than this
@@ -28,15 +30,13 @@ export class UserService {
     ) {}
 
     private async resetDailyFreeEnergyReplenishmentIfOneDayPassed(user: User): Promise<void> {
-        await this.em.populate(user, ["dailyEnergyReplenishmentClaimedDayTime"]);
-
         if (user.dailyEnergyReplenishmentClaimedDayTime !== undefined && user.dailyEnergyReplenishmentClaimedDayTime !== null) {
             const nextMidnight = new Date(user.dailyEnergyReplenishmentClaimedDayTime);
             nextMidnight.setDate(nextMidnight.getDate() + 1);
             nextMidnight.setHours(0, 0, 0, 0);
 
-            const currentTime: Date = new Date();
-            if (nextMidnight.getTime() > currentTime.getTime()) {
+            const currentTime: number = Date.now();
+            if (nextMidnight.getTime() > currentTime) {
                 return;
             }
         }
@@ -60,7 +60,8 @@ export class UserService {
     private async setBalancePerClick(user: User): Promise<void> {
         await this.em.populate(user, ["level", "boosters.clickPower"]);
 
-        const reward: number = user.level.level + await user.ownedCharacters.loadCount() + user.boosters.clickPower.level;
+        const clickPower: number = user.boosters === undefined || user.boosters === null ? 0 : user.boosters.clickPower.level;
+        const reward: number = user.level.level + await user.ownedCharacters.loadCount() + clickPower;
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -86,7 +87,7 @@ export class UserService {
 
         const ownedCharactersReward: number = await user.ownedCharacters.loadCount() * settings.energyLimitPerCharacter;
         const levelReward: number = user.level.level * settings.energyLimitPerLevel;
-        const boosterReward: number = user.boosters.energyLimit.level * settings.energyLimitPerBooster;
+        const boosterReward: number = (user.boosters?.energyLimit.level ?? 0) * settings.energyLimitPerBooster;
 
         const finalLimit: number = settings.startingEnergyLimit + ownedCharactersReward + levelReward + boosterReward;
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -282,9 +283,34 @@ export class UserService {
         user.totalReferralRewards = ammount;
     }
 
-    private addReferral(user: User, referral: Referral): void {
+    private async addReferral(user: User, referral: Referral): Promise<void> {
         user.referrals.add(referral);
         user.referralsCount += 1;
+
+        // Reset daily fortune wheel daily referrals
+        const currentTime: number = Date.now();
+        if (user.dailyFortuneWheelDailyReferralsDayTime !== undefined && user.dailyFortuneWheelDailyReferralsDayTime !== null) {
+            const nextMidnight = new Date(user.dailyFortuneWheelDailyReferralsDayTime);
+            nextMidnight.setDate(nextMidnight.getDate() + 1);
+            nextMidnight.setHours(0, 0, 0, 0);
+
+            if (currentTime > nextMidnight.getTime()) {
+                user.fortuneWheelDailyReferralsCount = 0;
+            }
+        }
+
+        // Check if user can claim daily fortune wheel
+        const settings: Settings = await this.settingsService.get();
+        if (user.fortuneWheelDailyReferralsCount >= settings.maxReferralsForFortuneWheelPerDay) {
+            return;
+        }
+
+        // Update daily fortune wheel
+        user.dailyFortuneWheelDailyReferralsDayTime = currentTime;
+        user.fortuneWheelDailyReferralsCount += 1;
+
+        // Claim fortune wheel reward
+        user.fortuneWheelAdditionalSpinsLeft += settings.fortuneWheelSpinsPerReferral;
     }
 
     private async setReferedBy(user: User, referralCode: string): Promise<void> {
@@ -296,7 +322,7 @@ export class UserService {
         }
 
         const referral: Referral = await this.referralService.create(new Referral(referrer, user));
-        this.addReferral(referrer, referral);
+        await this.addReferral(referrer, referral);
 
         user.referedBy = referral;
 
@@ -337,7 +363,7 @@ export class UserService {
 
     public async setDailyEnergyReplenishmentUsed(user: User, count: number): Promise<void> {
         const settings: Settings = await this.settingsService.get();
-        const usedCount: number = Math.min(count, settings.maxDailyEnergyReplenishment);
+        const usedCount: number = Math.max(0, Math.min(count, settings.maxDailyEnergyReplenishment));
 
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
@@ -345,6 +371,12 @@ export class UserService {
 
         // If zero then reset claim time, else set claim time
         user.dailyEnergyReplenishmentClaimedDayTime = count === 0 ? undefined : Date.now();
+    }
+
+    public setFortuneWheelSpinsLeft(user: User, count: number): void {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        user.fortuneWheelAdditionalSpinsLeft = count;
     }
 
     public increceBalance(user: User, ammount: number): void {
@@ -359,6 +391,14 @@ export class UserService {
 
     public increceReferralRewards(user: User, ammount: number): void {
         this.setReferralRewards(user, user.totalReferralRewards + ammount);
+    }
+
+    public async increceEnergyReplenishmentUsed(user: User, ammount: number): Promise<void> {
+        await this.setDailyEnergyReplenishmentUsed(user, user.dailyEnergyReplenishmentUsed + ammount);
+    }
+
+    public async decreceEnergyReplenishmentUsed(user: User, ammount: number): Promise<void> {
+        await this.setDailyEnergyReplenishmentUsed(user, user.dailyEnergyReplenishmentUsed - ammount);
     }
 
     public async canClaimDailyEnergyReplenishment(user: User): Promise<boolean> {
@@ -378,6 +418,16 @@ export class UserService {
         }
 
         return true;
+    }
+
+    public canSpinFortuneWheelForFree(user: User): boolean {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayTime: number = today.getTime();
+
+        return user.lastFreeFortuneWheelSpinTime === undefined
+            || user.lastFreeFortuneWheelSpinTime === null
+            || user.lastFreeFortuneWheelSpinTime !== todayTime;
     }
 
     public async create(
@@ -468,7 +518,8 @@ export class UserService {
             });
         }
 
-        const clickPowerBoost: ClickPowerLevelBooster | null = await this.em.getRepository(ClickPowerLevelBooster).findOne(
+        const clickPowerBoost: ClickPowerLevelBooster | null = await this.em.findOne(
+            ClickPowerLevelBooster,
             { level: 0 },
             { cache: 600_000 },
         );
@@ -674,6 +725,15 @@ export class UserService {
     public async upgradeBooster(user: User, boosterType: BoosterType): Promise<void> {
         await this.em.populate(user, ["boosters"]);
 
+        if (user.boosters === undefined || user.boosters === null) {
+            console.error(`User '${user.id}' has no boosters object.`);
+            throw createError({
+                statusCode: 500,
+                statusMessage: "User has no boosters object. Please contact support",
+                fatal: true,
+            });
+        }
+
         await this.userBoosterService.levelUp(user.boosters, boosterType, this);
         if (boosterType === BoosterType.EnergyLimit) {
             await this.update(user, () => this.setEnergy(user, user.energyLimit));
@@ -709,7 +769,6 @@ export class UserService {
     }
 
     public async claimDailyEnergyReplenishment(user: User): Promise<void> {
-        await this.resetDailyFreeEnergyReplenishmentIfOneDayPassed(user);
         const settings: Settings = await this.settingsService.get();
 
         if (user.energy >= user.energyLimit) {
@@ -719,6 +778,7 @@ export class UserService {
             });
         }
 
+        await this.resetDailyFreeEnergyReplenishmentIfOneDayPassed(user);
         if (user.dailyEnergyReplenishmentUsed > settings.maxDailyEnergyReplenishment) {
             throw createError({
                 statusCode: 400,
@@ -742,16 +802,6 @@ export class UserService {
     public async claimDailyLoginReward(user: User): Promise<number> {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
-        // OR
-        // If you want accurate reward claim time you can use this code
-        // Dont forget to fix `resetLastLoginRewardDayIfNeeded` too
-        // const today = new Date();
-        // const lastClaimDate = new Date(user.lastDailyLoginClaimTime);
-        // const isSameDay = lastClaimDate.getDate() === today.getDate()
-        //     && lastClaimDate.getMonth() === today.getMonth()
-        //     && lastClaimDate.getFullYear() === today.getFullYear();
-
         const todayTime: number = today.getTime();
 
         if (user.lastDailyLoginClaimedDayTime !== undefined
@@ -787,14 +837,6 @@ export class UserService {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-
-        // OR
-        // If you want accurate reward claim time you can use this code
-        // const today = new Date();
-        // const lastClaimDate = new Date(user.lastDailyRewardClaimTime);
-        // const isSameDay = lastClaimDate.getDate() === today.getDate()
-        //     && lastClaimDate.getMonth() === today.getMonth()
-        //     && lastClaimDate.getFullYear() === today.getFullYear();
 
         const todayTime: number = today.getTime();
 
@@ -910,5 +952,50 @@ export class UserService {
         await this.update(user);
 
         return task.reward;
+    }
+
+    public async spinFortuneWheel(user: User, selectedItem: FortuneWheelItem): Promise<void> {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayTime: number = today.getTime();
+
+        const haveFreeSpin: boolean = this.canSpinFortuneWheelForFree(user);
+        if (!haveFreeSpin && user.fortuneWheelAdditionalSpinsLeft === 0) {
+            throw createError({
+                statusCode: 400,
+                statusMessage: "You have already spun the wheel today",
+            });
+        }
+
+        if (haveFreeSpin) {
+            user.lastFreeFortuneWheelSpinTime = todayTime;
+        } else {
+            this.setFortuneWheelSpinsLeft(user, user.fortuneWheelAdditionalSpinsLeft - 1);
+        }
+
+        switch (selectedItem.type) {
+            case FortuneWheelItemType.BALANCE:
+                this.increceBalance(user, (<FortuneWheelBalaceItemReward>selectedItem.reward).balance);
+                break;
+
+            case FortuneWheelItemType.ENERGY_REPLENISHMENT:
+                await this.decreceEnergyReplenishmentUsed(
+                    user,
+                    (<FortuneWheelEnergyReplenishmentItemReward>selectedItem.reward).charges,
+                );
+                break;
+
+            case FortuneWheelItemType.NOTHING:
+                break;
+
+            default:
+                throw createError({
+                    statusCode: 500,
+                    statusMessage: "Fortune wheel item not found, please contact support",
+                    fatal: true,
+                });
+        }
+
+        await this.update(user);
     }
 }

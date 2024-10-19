@@ -3,6 +3,7 @@ import { LoginWidget } from "vue-tg";
 import type { LoginWidgetUser } from "vue-tg";
 import { toast } from "vue3-toastify";
 
+const config = useRuntimeConfig().public;
 const error = ref<string | undefined>(undefined);
 
 if (import.meta.dev) {
@@ -48,7 +49,7 @@ async function handleUserAuth(user: LoginWidgetUser): Promise<void> {
       </p>
 
       <LoginWidget
-        bot-username="sonicashgame_bot"
+        :bot-username="config.telegramBotName"
         :user-photo="true"
         @auth="handleUserAuth"
       />

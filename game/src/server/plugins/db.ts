@@ -3,17 +3,18 @@ import type { MikroORM } from "@mikro-orm/postgresql";
 import mikroOrmConfig from "../../../mikro-orm.config";
 import { EnergyLimitBoosterService, clickPowerLevelBoosterService as ClickPowerLevelBoosterService } from "~/server/services/boosters";
 import { CharacterService } from "~/server/services/character";
+import { FortuneWheelService, SettingsService } from "~/server/services";
 import { ReferralActionService, ReferralService } from "~/server/services/referral";
 import { UserCharacterService, UserLevelService, UserBoosterService, UserService } from "~/server/services/user";
 import { DailyLoginService } from "~/server/services/rewards";
 import { EarnTaskService } from "~/server/services/tasks";
 import { EnergyLimitLevelBooster, ClickPowerLevelBooster } from "~/server/entities/boosters";
 import { DailyLoginReward } from "~/server/entities/rewards";
+import { FortuneWheelItem } from "~/server/entities/fortune-wheel";
 import { EarnTask } from "~/server/entities/tasks";
 import { CharacterLevel, Character } from "~/server/entities/character";
-import { User, UserLevel } from "~/server/entities/user";
-import { EarnTaskType, UserRole } from "~/types";
-import { SettingsService } from "~/server/services";
+import { UserLevel } from "~/server/entities/user";
+import { EarnTaskType, FortuneWheelItemType, UserRole } from "~/types";
 import { Settings } from "~/server/entities/settings";
 
 async function setup(orm: MikroORM): Promise<void> {
@@ -29,6 +30,19 @@ async function setup(orm: MikroORM): Promise<void> {
     console.info("Settings");
     const settingsService = new SettingsService(emFork);
     await settingsService.create(new Settings());
+
+    console.info("Fortune Wheel");
+    const fortuneWheelService = new FortuneWheelService(emFork);
+    await fortuneWheelService.create(new FortuneWheelItem(0, "1,000", FortuneWheelItemType.BALANCE, 10, { balance: 1_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(1, "2,000", FortuneWheelItemType.BALANCE, 10, { balance: 2_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(2, "5,000", FortuneWheelItemType.BALANCE, 20, { balance: 5_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(3, "10,000", FortuneWheelItemType.BALANCE, 23, { balance: 10_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(4, "15,000", FortuneWheelItemType.BALANCE, 10, { balance: 15_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(5, "20,000", FortuneWheelItemType.BALANCE, 5, { balance: 20_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(6, "50,000", FortuneWheelItemType.BALANCE, 2, { balance: 50_000 }));
+    await fortuneWheelService.create(new FortuneWheelItem(7, "Good Luck", FortuneWheelItemType.NOTHING, 5, { }));
+    await fortuneWheelService.create(new FortuneWheelItem(8, "1 Energy Refill", FortuneWheelItemType.ENERGY_REPLENISHMENT, 10, { charges: 1 }));
+    await fortuneWheelService.create(new FortuneWheelItem(9, "2 Energy Refill", FortuneWheelItemType.ENERGY_REPLENISHMENT, 5, { charges: 2 }));
 
     console.info("Earn Task");
     await earnTaskService.create(new EarnTask(
@@ -220,7 +234,7 @@ async function setup(orm: MikroORM): Promise<void> {
             new CharacterLevel(characters[5], 4, 3_000_000, 870_000, 40_000),
             new CharacterLevel(characters[5], 5, 4_000_000, 915_000, 45_000),
             new CharacterLevel(characters[5], 6, 5_000_000, 965_000, 50_000),
-            new CharacterLevel(characters[5], 6, 6_000_000, 1_215_000, 250_000),
+            new CharacterLevel(characters[5], 7, 6_000_000, 1_215_000, 250_000),
         ];
         await characterService.addLevels(characters[5], levels);
     }
@@ -313,8 +327,10 @@ async function setup(orm: MikroORM): Promise<void> {
     await userService.update(adminUser);
 
     /*
-    for (let i = 0; i < 50; i++) {
-        await userService.create(2900 + i, "Egypt", `user${i}`, `user${i}`, `user${i}`, undefined, "589406119");
+    if (import.meta.dev) {
+        for (let i = 0; i < 8; i++) {
+            await userService.create(2900 + i, "Egypt", "127.0.0.1", `user${i}`, `user${i}`, `user${i}`, undefined, `${adminTelegramId}`);
+        }
     }
 
     {

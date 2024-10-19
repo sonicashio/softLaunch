@@ -121,9 +121,12 @@ export default defineNuxtConfig({
             },
             maxAge: 60 * 60 * 24, // 1 day
         },
-        serverVersion: 1,
+        serverVersion: 2,
         public: {
-            version: 1,
+            version: 2,
+            telegramBotName: "s0nicash_bot",
+            telegramBotWebAppName: "start",
+            appDataFetchInterval: 180_000,
         },
     },
 });

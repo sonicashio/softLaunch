@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { toast } from "vue3-toastify";
-import type { UserRole } from "~/types";
+import { UserRole } from "~/types";
 import { UserDto, UserLevelDto } from "~/types/dto/user";
 
 interface UsersData {
@@ -208,16 +208,30 @@ function selectAllUsers(checked: boolean): void {
 }
 
 function getUserRoleCssClass(role: UserRole): string {
-    // There is a bug if use roles from the enum
     switch (role) {
-        case "admin":
-        case "moderator":
+        case UserRole.ADMIN:
+        case UserRole.MODERATOR:
             return "bg-error/10 text-error";
-        case "support":
+        case UserRole.SUPPORT:
             return "bg-warning/10 text-warning";
-        case "user":
+        case UserRole.USER:
         default:
             return "bg-info/10 text-info";
+    }
+}
+
+function getUserRoleName(role: UserRole): string {
+    switch (role) {
+        case UserRole.ADMIN:
+            return "SuperAdmin";
+        case UserRole.MODERATOR:
+            return "Admin";
+        case UserRole.SUPPORT:
+            return "Support";
+        case UserRole.USER:
+            return "User";
+        default:
+            return "Unknown";
     }
 }
 </script>
@@ -354,8 +368,6 @@ function getUserRoleCssClass(role: UserRole): string {
             'TelegramId',
             'Name',
             'Role',
-            'IP',
-            'Country',
             'Level',
             'Banned',
             'Balance',
@@ -404,22 +416,8 @@ function getUserRoleCssClass(role: UserRole): string {
                   class="badge border-0 font-medium capitalize"
                   :class="getUserRoleCssClass(userInfo.user.role)"
                 >
-                  {{ userInfo.user.role }}
+                  {{ getUserRoleName(userInfo.user.role) }}
                 </div>
-              </div>
-            </td>
-
-            <!-- IP -->
-            <td>
-              <div class="font-medium">
-                {{ userInfo.user.ip }}
-              </div>
-            </td>
-
-            <!-- Country -->
-            <td>
-              <div class="font-medium">
-                {{ userInfo.user.country }}
               </div>
             </td>
 
@@ -558,6 +556,23 @@ function getUserRoleCssClass(role: UserRole): string {
             <input
               id="createdAt"
               :value="new Date(selectedUser.createdAt).toLocaleString()"
+              type="text"
+              class="input input-bordered"
+              disabled
+            />
+          </div>
+
+          <!-- IP -->
+          <div class="form-control mb-4">
+            <label
+              class="label"
+              for="ip"
+            >
+              <span class="label-text">IP</span>
+            </label>
+            <input
+              id="ip"
+              v-model="selectedUser.ip"
               type="text"
               class="input input-bordered"
               disabled
@@ -874,6 +889,22 @@ function getUserRoleCssClass(role: UserRole): string {
             <input
               id="dailyEnergyReplenishmentUsed"
               v-model="selectedUser.dailyEnergyReplenishmentUsed"
+              type="number"
+              class="input input-bordered"
+            />
+          </div>
+
+          <!-- Fortune Wheel Spins Left -->
+          <div class="form-control mb-4">
+            <label
+              class="label"
+              for="fortuneWheelSpinsLeft"
+            >
+              <span class="label-text">Fortune Wheel Spins Left</span>
+            </label>
+            <input
+              id="fortuneWheelSpinsLeft"
+              v-model="selectedUser.fortuneWheelSpinsLeft"
               type="number"
               class="input input-bordered"
             />

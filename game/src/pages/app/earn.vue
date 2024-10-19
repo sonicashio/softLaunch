@@ -7,6 +7,8 @@ definePageMeta({
     layout: "app-logged-in",
 });
 
+useState<boolean>("earnTasksIndicator").value = false;
+
 const { user, sync: userSync } = useUser();
 
 // Earnings
@@ -71,15 +73,15 @@ function transfromTasks(tasks: EarnTaskDto[]): EarnTask[] {
             url: task.url,
             openUrlOnCheck: openUrlOnCheck,
         };
-    });
+    }).sort((a, b) => (a.completed === b.completed) ? 0 : (a.completed ? 1 : -1));
 }
-const { data: tasks, error } = await useFetch("/api/earn/task-list", {
-    transform: transfromTasks,
-});
 
-if (error.value) {
-    toast.error("Failed to fetch earn tasks: " + getErrorMsg(error.value));
-}
+const { appData } = useAppData();
+const tasks = ref<EarnTask[]>(transfromTasks(appData.earnTasks.data.value));
+
+watch(appData.earnTasks.data, () => {
+    tasks.value = transfromTasks(appData.earnTasks.data.value);
+});
 
 function openPopup(task: EarnTask): void {
     selectedTask.value = task;
@@ -110,7 +112,8 @@ async function checkTask(): Promise<void> {
         });
 
         await userSync(0);
-        tasks.value = transfromTasks(await $fetch("/api/earn/task-list")!);
+        await appData!.earnTasks.fetch();
+        tasks.value = transfromTasks(appData!.earnTasks.data.value);
         selectedTask.value = tasks.value.find(task => task.id === selectedTask.value!.id) ?? null;
         toast.success("Task reward claimed", { autoClose: 1000 });
     } catch (error) {

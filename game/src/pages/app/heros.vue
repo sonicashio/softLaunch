@@ -10,15 +10,16 @@ const isLoading = ref<boolean>(false);
 const isPopupOpen = ref<boolean>(false);
 const { user, sync } = useUser();
 
-const { data: heros, error } = await useFetch("/api/character/list", {
-    transform: (data: UserCharacterDto[]) => {
-        return data.sort((a, b) => a.rank - b.rank);
-    },
-});
-
-if (error.value) {
-    toast.error("Failed to fetch heros: " + getErrorMsg(error.value));
+function transform(data: UserCharacterDto[]): UserCharacterDto[] {
+    return data.sort((a, b) => a.rank - b.rank);
 }
+
+const { appData } = useAppData();
+const heros = ref<UserCharacterDto[]>(transform(appData.userCharacters.data.value));
+
+watch(appData.userCharacters.data, () => {
+    heros.value = transform(appData.userCharacters.data.value);
+});
 
 const userSelectedHero = ref<UserCharacterDto>(heros.value!.find(hero => hero.selected)!);
 const heroSelected = ref<UserCharacterDto>(userSelectedHero.value);

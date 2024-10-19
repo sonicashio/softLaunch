@@ -24,8 +24,6 @@ export default defineEventHandler(async (event) => {
         });
     }
 
-    const settingsService = new SettingsService(em);
-    const settings: Settings = await settingsService.get();
-
+    const settings: Settings = await new SettingsService(em).get();
     return SettingsDto.fromSettings(settings);
 });

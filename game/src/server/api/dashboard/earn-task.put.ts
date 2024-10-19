@@ -67,6 +67,7 @@ const taskSchema = z.discriminatedUnion("type", [
     youTubeSubscribeSchema,
     inviteFriendsSchema,
 ]);
+
 export default defineEventHandler(async (event) => {
     const session = await requireUserSession(event);
 

@@ -15,13 +15,15 @@ const ctorSchema = z.object({
     username: z.union([z.string().length(0), z.string().min(1).max(64)]).optional(),
 });
 
+// TODO: Some DB normalization should be done here
+
 @Entity({ tableName: "users" })
 export class User {
     @PrimaryKey({ type: "bigint", autoincrement: true })
     public readonly id!: number; // could be string type
 
-    @Property({ version: true })
-    public readonly version!: number; // Optimistic Locking
+    // @Property({ version: true })
+    // public readonly version!: number; // Optimistic Locking
 
     @Property({ length: 64, nullable: false })
     @Index()
@@ -119,11 +121,11 @@ export class User {
     @Property({ type: "bigint" })
     public readonly lastEnergyModifiedTime: number;
 
-    @Property()
-    public readonly dailyEnergyReplenishmentUsed: number;
-
     @Property({ type: "bigint", nullable: true })
     public dailyEnergyReplenishmentClaimedDayTime?: number; // Value could be null or undefined https://github.com/mikro-orm/mikro-orm/discussions/6037
+
+    @Property()
+    public readonly dailyEnergyReplenishmentUsed: number;
 
     @Property()
     public lastLoginRewardDay: number;
@@ -135,10 +137,22 @@ export class User {
     public lastDailyRewardClaimTime?: number; // Value could be null or undefined https://github.com/mikro-orm/mikro-orm/discussions/6037
 
     @OneToOne(() => UserBooster, booster => booster.owner, { nullable: true })
-    public boosters!: Rel<UserBooster>;
+    public boosters?: Rel<UserBooster>; // Value could be null or undefined https://github.com/mikro-orm/mikro-orm/discussions/6037
 
     @OneToMany(() => EarnTaskCompletion, taskCompletion => taskCompletion.user)
     public readonly completedEarnTasks: Collection<EarnTaskCompletion>;
+
+    @Property({ type: "bigint", nullable: true })
+    public lastFreeFortuneWheelSpinTime?: number; // Value could be null or undefined https://github.com/mikro-orm/mikro-orm/discussions/6037
+
+    @Property()
+    public fortuneWheelAdditionalSpinsLeft: number;
+
+    @Property({ type: "bigint", nullable: true })
+    public dailyFortuneWheelDailyReferralsDayTime?: number; // Value could be null or undefined https://github.com/mikro-orm/mikro-orm/discussions/6037
+
+    @Property()
+    public fortuneWheelDailyReferralsCount: number;
 
     constructor(
         telegramId: number,
@@ -182,5 +196,7 @@ export class User {
         this.dailyEnergyReplenishmentUsed = 0;
         this.lastLoginRewardDay = 0;
         this.completedEarnTasks = new Collection<EarnTaskCompletion>(this);
+        this.fortuneWheelAdditionalSpinsLeft = 0;
+        this.fortuneWheelDailyReferralsCount = 0;
     }
 }

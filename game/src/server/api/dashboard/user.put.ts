@@ -15,6 +15,7 @@ const userSchema = z.object({
     balance: z.number().min(0, "Balance must be 0 or greater"),
     energy: z.number().min(0, "Energy must be 0 or greater"),
     dailyEnergyReplenishmentUsed: z.number().min(0, "Daily energy replenishment used must be 0 or greater"),
+    fortuneWheelSpinsLeft: z.number().min(0, "Fortune wheel spins left must be 0 or greater"),
 });
 
 export default defineEventHandler(async (event) => {
@@ -126,6 +127,9 @@ export default defineEventHandler(async (event) => {
 
     // Daily energy replenishment used
     await userService.setDailyEnergyReplenishmentUsed(userToEdit, body.dailyEnergyReplenishmentUsed);
+
+    // Fortune wheel spins left
+    userService.setFortuneWheelSpinsLeft(userToEdit, body.fortuneWheelSpinsLeft);
 
     await userService.update(userToEdit);
 

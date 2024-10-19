@@ -120,6 +120,7 @@ export default defineEventHandler(async (event) => {
             throw createError({
                 statusCode: 500,
                 statusMessage: "Unreachable code, invalid task type",
+                fatal: true,
             });
     }
     await earnTaskService.create(new EarnTask(body.title, body.type, body.reward, requirements));

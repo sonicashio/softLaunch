@@ -5,6 +5,7 @@ import { User } from "~/server/entities/user";
 import { ReferralActionService, ReferralService } from "~/server/services/referral";
 import { SettingsService } from "~/server/services";
 import { UserBoosterService, UserCharacterService, UserService } from "~/server/services/user";
+import { UserBoostersDto } from "~/types/dto/user";
 
 export default defineEventHandler(async (event) => {
     const session = await requireUserSession(event);
@@ -70,13 +71,14 @@ export default defineEventHandler(async (event) => {
     const settingsService = new SettingsService(em);
     const settings: Settings = await settingsService.get();
 
-    return {
-        curEnergyLimitLevel: user.boosters.energyLimit.level,
-        energyLimitLevels: energyLimitLevelsDto,
-        curClickPowerLevel: user.boosters.clickPower.level,
-        clickPowerLevels: clickPowerLevelsDto,
-        energyReplenishment: settings.maxDailyEnergyReplenishment,
-        energyReplenishmentUsed: user.dailyEnergyReplenishmentUsed,
-        canUseEnergyReplenishment: userService.canClaimDailyEnergyReplenishment(user),
-    };
+    const dto = new UserBoostersDto();
+    dto.curEnergyLimitLevel = user.boosters?.energyLimit.level ?? 0;
+    dto.energyLimitLevels = energyLimitLevelsDto;
+    dto.curClickPowerLevel = user.boosters?.clickPower.level ?? 0;
+    dto.clickPowerLevels = clickPowerLevelsDto;
+    dto.energyReplenishment = settings.maxDailyEnergyReplenishment;
+    dto.energyReplenishmentUsed = user.dailyEnergyReplenishmentUsed;
+    dto.canUseEnergyReplenishment = await userService.canClaimDailyEnergyReplenishment(user);
+
+    return dto;
 });

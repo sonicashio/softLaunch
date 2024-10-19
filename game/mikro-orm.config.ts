@@ -9,6 +9,7 @@ import { Character, CharacterLevel } from "./src/server/entities/character";
 import { User, UserCharacter, UserLevel } from "./src/server/entities/user";
 import { Settings } from "~/server/entities/settings";
 import { UsersStatics } from "~/server/entities/statics";
+import { FortuneWheelItem } from "~/server/entities/fortune-wheel";
 
 const config: Options = {
     driver: PostgreSqlDriver,
@@ -20,6 +21,7 @@ const config: Options = {
     dbName: process.env["DB_NAME"],
     extensions: [Migrator],
     migrations: {
+        // NOTE: When create migrations using mikro-orm cli, set the path to `"./src/server/migrations"`
         path: import.meta.dev ? "./src/server/migrations" : "./.output/server/migrations",
     },
 
@@ -28,6 +30,7 @@ const config: Options = {
     // entitiesTs: ["src/server/entities/**/*.entity.ts"],
     entities: [
         Settings,
+        FortuneWheelItem,
         EarnTask,
         EnergyLimitLevelBooster,
         ClickPowerLevelBooster,

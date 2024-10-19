@@ -5,9 +5,6 @@ export class Settings {
     @PrimaryKey({ autoincrement: true })
     public readonly id!: number;
 
-    @Property({ length: 255, nullable: true })
-    public telegramWebAppUrl: string;
-
     @Property({ length: 64, nullable: true })
     public telegramChannelId: string;
 
@@ -38,8 +35,13 @@ export class Settings {
     @Property()
     public energyLimitPerBooster: number;
 
+    @Property()
+    public maxReferralsForFortuneWheelPerDay: number;
+
+    @Property()
+    public fortuneWheelSpinsPerReferral: number;
+
     constructor() {
-        this.telegramWebAppUrl = "https://t.me/sonicashgame_bot/start";
         this.telegramChannelId = "-1002217295250";
         this.userStartingBalance = 5_000;
         this.maxDailyEnergyReplenishment = 6;
@@ -50,5 +52,7 @@ export class Settings {
         this.energyLimitPerCharacter = 100;
         this.energyLimitPerLevel = 100;
         this.energyLimitPerBooster = 100;
+        this.maxReferralsForFortuneWheelPerDay = 5;
+        this.fortuneWheelSpinsPerReferral = 2;
     }
 }

@@ -1,6 +1,9 @@
 import type { EntityManager } from "@mikro-orm/postgresql";
 import { z } from "zod";
 import { User } from "~/server/entities/user";
+import { SettingsService } from "~/server/services";
+import { ReferralActionService, ReferralService } from "~/server/services/referral";
+import { UserBoosterService, UserCharacterService, UserService } from "~/server/services/user";
 import { UserRole } from "~/types";
 import { UserDto } from "~/types/dto/user";
 
@@ -108,8 +111,20 @@ export default defineEventHandler(async (event) => {
 
     const [users, total] = await qb.getResultAndCount();
 
+    const userService = new UserService(
+        em,
+        new SettingsService(em),
+        new UserBoosterService(em),
+        new ReferralService(em),
+        new ReferralActionService(em),
+        new UserCharacterService(em),
+    );
+
     const usersDtos = await Promise.all(
-        users.map(userToDto => UserDto.fromUser(em, userToDto, null, true)),
+        users.map((userToDto) => {
+            const userCanSpinFortuneWheelForFree: boolean = userService.canSpinFortuneWheelForFree(userToDto);
+            return UserDto.fromUser(em, userToDto, null, true, userCanSpinFortuneWheelForFree);
+        }),
     );
 
     return {

@@ -11,6 +11,7 @@ export default defineI18nConfig(() => ({
             characterLevels: "Character Levels",
             earnTasks: "Earn Tasks",
             dailyLogins: "Daily Logins",
+            fortuneWheel: "Fortune Wheel",
             settings: "Settings",
         },
     },
